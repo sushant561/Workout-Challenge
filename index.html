@@ -28,6 +28,17 @@
             </div>
         </div>
     </section>
+    <div class="date-row" style="display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:40px auto 0 auto;padding:0 2rem;">
+        <div style="flex:1;text-align:left;">
+            <label for="startDate" style="font-weight:600;font-size:1.2rem;">Start Date:</label>
+            <input type="date" id="startDate" style="padding:0.5rem 1rem;font-size:1.2rem;border-radius:0.5rem;border:1px solid #ccc;">
+        </div>
+        <div style="flex:1;text-align:right;">
+            <span style="font-weight:600;font-size:1.2rem;">End Date:</span>
+            <span id="endDateText" style="margin-left:1rem;font-size:1.2rem;"></span>
+        </div>
+    </div>
+    <div id="checklistContainer" style="max-width:1200px;margin:24px auto 0 auto;padding:0 2rem;"></div>
     <section class="days-section" id="days-section">
         <div class="days-header">
             <h2>Weekly Workout Plan</h2>
@@ -72,5 +83,109 @@
             <p>In 90 days, you can rewrite your story. Dedication, consistency, and determination will turn today’s struggle into tomorrow’s confidence and lifelong strength.</p>
         </div>
     </footer>
+    <script>
+(function() {
+    var startInput = document.getElementById('startDate');
+    var endText = document.getElementById('endDateText');
+    function formatDate(date) {
+        return date.toISOString().split('T')[0];
+    }
+    function setEndDate(start) {
+        var startDate = new Date(start);
+        var endDate = new Date(startDate.getTime() + 90*24*60*60*1000);
+        endText.textContent = formatDate(endDate);
+        localStorage.setItem('startDate', formatDate(startDate));
+        localStorage.setItem('endDate', formatDate(endDate));
+    }
+    // Load from localStorage if available
+    var savedStart = localStorage.getItem('startDate');
+    var savedEnd = localStorage.getItem('endDate');
+    if (savedStart && savedEnd) {
+        startInput.value = savedStart;
+        endText.textContent = savedEnd;
+    }
+    startInput.addEventListener('change', function() {
+        setEndDate(this.value);
+        // Reset checklist if start date changes
+        localStorage.removeItem('checklistProgress');
+        window.location.reload();
+    });
+
+    // Checklist logic
+    var checklistContainer = document.getElementById('checklistContainer');
+    function getChecklistProgress() {
+        var progress = localStorage.getItem('checklistProgress');
+        return progress ? JSON.parse(progress) : [];
+    }
+    function setChecklistProgress(progress) {
+        localStorage.setItem('checklistProgress', JSON.stringify(progress));
+    }
+    function renderChecklist() {
+        checklistContainer.innerHTML = '';
+        var startDateStr = startInput.value;
+        if (!startDateStr) return;
+        var startDate = new Date(startDateStr);
+        var progress = getChecklistProgress();
+        var firstUnchecked = progress.findIndex(v => !v);
+        var startIdx = firstUnchecked === -1 ? progress.length : firstUnchecked;
+        // Show 12 at a time
+        var showFrom = Math.floor(startIdx / 12) * 12;
+        var showTo = Math.min(showFrom + 12, 90);
+        var checklist = document.createElement('div');
+        checklist.style.display = 'flex';
+        checklist.style.flexWrap = 'wrap';
+        checklist.style.gap = '1rem';
+        for (var i = showFrom; i < showTo; i++) {
+            var day = new Date(startDate.getTime() + i*24*60*60*1000);
+            var label = document.createElement('label');
+            label.style.display = 'flex';
+            label.style.alignItems = 'center';
+            label.style.gap = '0.5rem';
+            label.style.background = '#fff';
+            label.style.borderRadius = '0.5rem';
+            label.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
+            label.style.padding = '0.5rem 1rem';
+            label.style.minWidth = '180px';
+            label.style.marginBottom = '0.5rem';
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = !!progress[i];
+            checkbox.style.transform = 'scale(1.2)';
+            checkbox.addEventListener('change', (function(idx) {
+                return function() {
+                    progress[idx] = this.checked;
+                    setChecklistProgress(progress);
+                    // If last in interval, re-render to show next batch
+                    if ((idx+1) % 12 === 0 || idx === 89) {
+                        renderChecklist();
+                    }
+                };
+            })(i));
+            var dayText = document.createElement('span');
+            dayText.textContent = 'Day ' + (i+1) + ' (' + formatDate(day) + ')';
+            label.appendChild(checkbox);
+            label.appendChild(dayText);
+            checklist.appendChild(label);
+        }
+        checklistContainer.appendChild(checklist);
+        // Progress bar
+        var progressBar = document.createElement('div');
+        progressBar.style.height = '8px';
+        progressBar.style.background = '#eee';
+        progressBar.style.borderRadius = '4px';
+        progressBar.style.margin = '1rem 0';
+        var percent = (progress.filter(Boolean).length / 90) * 100;
+        var fill = document.createElement('div');
+        fill.style.height = '100%';
+        fill.style.width = percent + '%';
+        fill.style.background = '#ff6b6b';
+        fill.style.borderRadius = '4px';
+        progressBar.appendChild(fill);
+        checklistContainer.appendChild(progressBar);
+    }
+    // Render on load if start date is set
+    if (startInput.value) renderChecklist();
+})();
+</script>
 </body>
 </html>
