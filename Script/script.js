@@ -75,3 +75,29 @@ document.addEventListener('DOMContentLoaded', () => {
     body1Img.addEventListener('mouseenter', animateArrow);
     body2Img.addEventListener('mouseenter', animateArrow);
 });
+
+// ###################### Get started scrool smoothly ################### 
+
+document.querySelector(".get-started-btn").addEventListener("click", function() {
+    document.getElementById("days-section").scrollIntoView({
+      behavior: "smooth"
+    });
+  });
+
+// ###################### Redirect day buttons to respective pages ################### 
+document.addEventListener('DOMContentLoaded', () => {
+    const dayButtons = document.querySelectorAll('.day-btn');
+    const buttonToPage = {
+        'Push': 'push.html',
+        'Pull': 'pull.html',
+        'Legs': 'legs.html'
+    };
+    dayButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const page = buttonToPage[btn.textContent.trim()];
+            if (page) {
+                window.location.href = page;
+            }
+        });
+    });
+});
