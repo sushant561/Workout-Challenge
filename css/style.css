@@ -383,4 +383,7 @@ body{
     .content p {
         font-size: 1.6rem;
     }
+    .curly-arrow-container {
+        display: none !important;
+    }
 }
