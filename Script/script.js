@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function animateArrow() {
         // Reset animations
         arrowPath.style.animation = 'none';
-        arrowHead.style.animation = 'none';
         
         // Force reflow
         void arrowPath.offsetWidth;
